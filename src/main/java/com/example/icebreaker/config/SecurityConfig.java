@@ -52,16 +52,15 @@ public class SecurityConfig {
 
 
     @Bean
-@Qualifier("inMemoryUserDetailsService")
-public UserDetailsService inMemoryUserDetailsService(PasswordEncoder encoder) {
-    return new InMemoryUserDetailsManager(
-        User.withUsername("demo@example.com")
+    @Qualifier("inMemoryUserDetailsService")
+    public UserDetailsService inMemoryUserDetailsService(passwordEncoder encoder) {
+        return new InMemoryUserDetailsManager(
+            User.withUsername("demo@example.com")
             .password(encoder.encode("Passw0rd!"))
-            // Provide BOTH forms so @PreAuthorize with hasRole('USER') or hasAuthority('USER') passes
             .authorities("ROLE_USER", "USER")
             .build()
-    );
-}
+        );
+    }
 
 
     @Bean
