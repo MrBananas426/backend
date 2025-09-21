@@ -57,7 +57,7 @@ public class SecurityConfig {
         return new InMemoryUserDetailsManager(
             User.withUsername("demo@example.com")
             .password(encoder.encode("Passw0rd!"))
-            .authorities("ROLE_USER", "USER")
+            .authorities("ROLE_USER", "USER", "ROLE_ADMIN", "ADMIN")
             .build()
     );
 }
