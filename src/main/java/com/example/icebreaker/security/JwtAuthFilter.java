@@ -4,6 +4,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -13,18 +15,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
 import java.io.IOException;
 
-/**
- * JwtAuthFilter with permissive token extraction:
- * - Supports "Authorization: Bearer <token>"
- * - Supports "Authorization: <token>"
- * - Supports "X-Auth-Token" header
- * - Supports "token" query parameter
- */
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
+  private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
 
   private final JwtUtil jwtUtil;
   private final UserDetailsService userDetailsService;
@@ -65,46 +60,50 @@ public class JwtAuthFilter extends OncePerRequestFilter {
       return;
     }
 
-    // ---- Necessary correction: broader token extraction ----
+    // --- token extraction (Authorization Bearer | Authorization raw | X-Auth-Token | ?token=) ---
     String token = null;
-
     String authorization = request.getHeader("Authorization");
     if (authorization != null) {
       if (authorization.regionMatches(true, 0, "Bearer ", 0, 7) && authorization.length() > 7) {
-        token = authorization.substring(7).trim(); // "Bearer <token>"
+        token = authorization.substring(7).trim();
       } else {
-        token = authorization.trim();               // "<token>"
+        token = authorization.trim();
       }
     }
-
     if (token == null || token.isEmpty()) {
-      String xHeader = request.getHeader("X-Auth-Token");
-      if (xHeader != null && !xHeader.isBlank()) {
-        token = xHeader.trim();
-      }
+      String x = request.getHeader("X-Auth-Token");
+      if (x != null && !x.isBlank()) token = x.trim();
     }
-
     if (token == null || token.isEmpty()) {
       String q = request.getParameter("token");
-      if (q != null && !q.isBlank()) {
-        token = q.trim();
-      }
+      if (q != null && !q.isBlank()) token = q.trim();
     }
-    // --------------------------------------------------------
 
-    if (token != null && !token.isEmpty()
-        && SecurityContextHolder.getContext().getAuthentication() == null) {
+    if (token == null || token.isEmpty()) {
+      log.debug("No token found on {}", request.getRequestURI());
+      chain.doFilter(request, response);
+      return;
+    }
+
+    // --- validate and authenticate ---
+    if (SecurityContextHolder.getContext().getAuthentication() == null) {
       try {
-        if (jwtUtil.isValid(token)) {
-          String subject = jwtUtil.getSubject(token); // e.g., email or userId
+        boolean valid = jwtUtil.isValid(token);
+        log.debug("Token present for {} (len={}): valid={}",
+            request.getRequestURI(), token.length(), valid);
+
+        if (valid) {
+          String subject = jwtUtil.getSubject(token);
           UserDetails user = userDetailsService.loadUserByUsername(subject);
 
           UsernamePasswordAuthenticationToken auth =
               new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
           auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
           SecurityContextHolder.getContext().setAuthentication(auth);
+          log.debug("Authenticated subject={} with authorities={}", subject, user.getAuthorities());
         }
       } catch (Exception ex) {
+        log.debug("JWT processing failed: {}", ex.getMessage());
         SecurityContextHolder.clearContext();
       }
     }
