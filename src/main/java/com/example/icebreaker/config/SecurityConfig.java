@@ -10,6 +10,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -26,7 +28,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .headers(h -> h.frameOptions(f -> f.sameOrigin())) // H2 console (dev)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/actuator/**").permitAll()   // health/info, etc.
+                .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
                 .anyRequest().authenticated()
@@ -41,7 +43,7 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // The bean your JwtAuthFilter is asking for:
+    // UserDetailsService requested by your JwtAuthFilter (qualifier)
     @Bean
     @Qualifier("inMemoryUserDetailsService")
     public UserDetailsService inMemoryUserDetailsService(PasswordEncoder encoder) {
@@ -61,5 +63,11 @@ public class SecurityConfig {
         p.setUserDetailsService(uds);
         p.setPasswordEncoder(encoder);
         return p;
+    }
+
+    // AuthenticationManager bean for AuthController
+    @Bean
+    public AuthenticationManager authenticationManager(DaoAuthenticationProvider provider) {
+        return new ProviderManager(provider);
     }
 }
