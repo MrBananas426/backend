@@ -1,0 +1,20 @@
+package com.example.icebreaker.tags;
+
+public enum TalkAbout {
+
+        MUSIC_I_LOVE,
+        TRAVEL_STORIES,
+        FAVORITE_COMFORT_FOOD,
+        WHY_NO_FAVORITE_MOVIE,
+        WHAT_IM_DOING_HERE,
+        BEST_COFFEE_IN_TOWN,
+        OBSESSED_WITH_LATELY,
+        HOW_WEIRD_PEOPLE_ARE,
+        GOOD_FIRST_IMPRESSION,
+        MEMES_OR_INTERNET_RABBIT_HOLES,
+        RANDOM_FUN_FACT,
+        TRYING_TO_GET_BETTER_AT,
+        THINGS_I_NOTICE_ABOUT_PEOPLE,
+        WEIRD_DREAM_LAST_NIGHT
+
+}
