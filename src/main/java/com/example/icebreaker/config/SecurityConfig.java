@@ -1,5 +1,6 @@
 package com.example.icebreaker.config;
 
+import com.example.icebreaker.security.JwtAuthFilter;                         // ← add
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -8,6 +9,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; // ← add
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,7 +18,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
-import org.springframework.security.web.authentication.rememberme.TokenBasedRememberMeServices; // ← HIGHLIGHT
+import org.springframework.security.web.authentication.rememberme.TokenBasedRememberMeServices;
 
 @Configuration
 @EnableWebSecurity
@@ -26,11 +28,12 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             DaoAuthenticationProvider authProvider,
-            TokenBasedRememberMeServices rememberMeServices // ← HIGHLIGHT
+            TokenBasedRememberMeServices rememberMeServices,
+            JwtAuthFilter jwtAuthFilter                                        // ← add
     ) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            .headers(h -> h.frameOptions(f -> f.sameOrigin())) // H2 console (dev)
+            .headers(h -> h.frameOptions(f -> f.sameOrigin()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
@@ -38,8 +41,9 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authProvider)
-            .rememberMe(rm -> rm.rememberMeServices(rememberMeServices)) // ← HIGHLIGHT
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+            .rememberMe(rm -> rm.rememberMeServices(rememberMeServices))
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); // ← add
         return http.build();
     }
 
@@ -47,7 +51,7 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 
     @Bean
-    @Qualifier("inMemoryUserDetailsService") // ← matches what JwtAuthFilter requests
+    @Qualifier("inMemoryUserDetailsService")
     public UserDetailsService inMemoryUserDetailsService(PasswordEncoder encoder) {
         return new InMemoryUserDetailsManager(
             User.withUsername("demo@example.com")
@@ -72,12 +76,10 @@ public class SecurityConfig {
         return new ProviderManager(provider);
     }
 
-    // Bean required by AuthService constructor
     @Bean
     public TokenBasedRememberMeServices rememberMeServices(
-            @Qualifier("inMemoryUserDetailsService") UserDetailsService uds
-    ) {
-        String key = System.getenv().getOrDefault("REMEMBER_ME_KEY", "change-me-now"); // ← env-backed
+            @Qualifier("inMemoryUserDetailsService") UserDetailsService uds) {
+        String key = System.getenv().getOrDefault("REMEMBER_ME_KEY", "change-me-now");
         TokenBasedRememberMeServices s = new TokenBasedRememberMeServices(key, uds);
         s.setParameter("remember-me");
         s.setCookieName("remember-me");
