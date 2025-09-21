@@ -82,7 +82,9 @@ public class SecurityConfig {
       .csrf(csrf -> csrf.disable())                                          // ← HIGHLIGHT
       .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .authorizeHttpRequests(auth -> auth
-        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()     // ← HIGHLIGHT
+        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+        .requestMatchers("/acuator/health", "/acuator/health/**")
+        .requestMatchers("/api/auth/**").permitAll()
         .requestMatchers("/error", "/h2-console/**").permitAll()
         .anyRequest().authenticated()
       )
