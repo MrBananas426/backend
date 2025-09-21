@@ -16,14 +16,18 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.authentication.rememberme.TokenBasedRememberMeServices; // ← HIGHLIGHT
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   DaoAuthenticationProvider authProvider) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            DaoAuthenticationProvider authProvider,
+            TokenBasedRememberMeServices rememberMeServices // ← HIGHLIGHT
+    ) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .headers(h -> h.frameOptions(f -> f.sameOrigin())) // H2 console (dev)
@@ -34,18 +38,16 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authProvider)
+            .rememberMe(rm -> rm.rememberMeServices(rememberMeServices)) // ← HIGHLIGHT
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         return http.build();
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 
-    // UserDetailsService requested by your JwtAuthFilter (qualifier)
     @Bean
-    @Qualifier("inMemoryUserDetailsService")
+    @Qualifier("inMemoryUserDetailsService") // ← matches what JwtAuthFilter requests
     public UserDetailsService inMemoryUserDetailsService(PasswordEncoder encoder) {
         return new InMemoryUserDetailsManager(
             User.withUsername("demo@example.com")
@@ -65,9 +67,20 @@ public class SecurityConfig {
         return p;
     }
 
-    // AuthenticationManager bean for AuthController
     @Bean
     public AuthenticationManager authenticationManager(DaoAuthenticationProvider provider) {
         return new ProviderManager(provider);
+    }
+
+    // Bean required by AuthService constructor
+    @Bean
+    public TokenBasedRememberMeServices rememberMeServices(
+            @Qualifier("inMemoryUserDetailsService") UserDetailsService uds
+    ) {
+        String key = System.getenv().getOrDefault("REMEMBER_ME_KEY", "change-me-now"); // ← env-backed
+        TokenBasedRememberMeServices s = new TokenBasedRememberMeServices(key, uds);
+        s.setParameter("remember-me");
+        s.setCookieName("remember-me");
+        return s;
     }
 }
