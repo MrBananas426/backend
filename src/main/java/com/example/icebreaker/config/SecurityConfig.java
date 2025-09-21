@@ -53,15 +53,14 @@ public class SecurityConfig {
 
     @Bean
     @Qualifier("inMemoryUserDetailsService")
-    public UserDetailsService inMemoryUserDetailsService(passwordEncoder encoder) {
+    public UserDetailsService inMemoryUserDetailsService(PasswordEncoder encoder) {
         return new InMemoryUserDetailsManager(
             User.withUsername("demo@example.com")
             .password(encoder.encode("Passw0rd!"))
             .authorities("ROLE_USER", "USER")
             .build()
-        );
-    }
-
+    );
+}
 
     @Bean
     public DaoAuthenticationProvider daoAuthenticationProvider(
