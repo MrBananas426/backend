@@ -1,4 +1,5 @@
-﻿package com.example.icebreaker.security;
+﻿// C:\Users\codyv\Desktop\backend\backend\src\main\java\com\example\icebreaker\security\JwtAuthFilter.java
+package com.example.icebreaker.security;
 
 import org.springframework.context.annotation.Lazy;
 import jakarta.servlet.FilterChain;
