@@ -1,12 +1,12 @@
-// C:\Users\codyv\Desktop\backend\backend\src\main\java\com\example\icebreaker\security\JwtService.java
 package com.example.icebreaker.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;                // ← HIGHLIGHT
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;                                  // ← HIGHLIGHT
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
@@ -15,15 +15,14 @@ import java.util.Map;
 @Service
 public class JwtService {
 
-    // ← HIGHLIGHT: use a raw UTF-8 secret (not Base64); 32+ chars for HS256
-    private static final String DEV_SECRET = "demo-secret-should-be-at-least-32-chars-long-123";
+    private final Key signingKey;                                   // ← HIGHLIGHT
+    private final long expMillis;                                   // ← HIGHLIGHT
 
-    // ← HIGHLIGHT: token lifetime (adjust if needed)
-    private static final long EXP_MILLIS = 1000L * 60 * 60 * 24 * 7; // 7 days
-
-    // ↓↓↓ HIGHLIGHT: no Base64 decode; use raw bytes with Keys.hmacShaKeyFor
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(DEV_SECRET.getBytes(StandardCharsets.UTF_8));
+    public JwtService(
+            @Value("${app.jwt.secret}") String secret,              // ← HIGHLIGHT (same prop as JwtUtil)
+            @Value("${app.jwt.expiration-ms}") long expMillis) {    // ← HIGHLIGHT
+        this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.expMillis = expMillis;
     }
 
     public String extractUsername(String token) {
@@ -32,13 +31,12 @@ public class JwtService {
 
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+                .setSigningKey(signingKey)                          // ← HIGHLIGHT
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
 
-    // ↓↓↓ HIGHLIGHT: simple generator used by AuthController
     public String generateToken(UserDetails user) {
         return buildToken(new HashMap<>(), user.getUsername());
     }
@@ -53,8 +51,8 @@ public class JwtService {
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(now))
-                .setExpiration(new Date(now + EXP_MILLIS))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)      // ← HIGHLIGHT
+                .setExpiration(new Date(now + expMillis))
+                .signWith(signingKey, SignatureAlgorithm.HS256)     // ← HIGHLIGHT
                 .compact();
     }
 
@@ -69,7 +67,7 @@ public class JwtService {
 
     private boolean isExpired(String token) {
         Date exp = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+                .setSigningKey(signingKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
