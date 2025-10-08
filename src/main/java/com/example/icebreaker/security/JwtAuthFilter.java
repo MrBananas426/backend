@@ -1,4 +1,4 @@
-﻿// C:\Users\codyv\Desktop\backend\backend\src\main\java\com\example\icebreaker\security\JwtAuthFilter.java
+// ← HIGHLIGHT: Ensure the very first character in the file is 'p' in 'package' (NO characters before it)
 package com.example.icebreaker.security;
 
 import org.springframework.context.annotation.Lazy;
@@ -29,7 +29,7 @@ public class JwtAuthFilter extends org.springframework.web.filter.OncePerRequest
 
   public JwtAuthFilter(
       JwtUtil jwtUtil,
-      @Qualifier("customUserDetailsService") UserDetailsService userDetailsService // ← HIGHLIGHT (use DB-backed service)
+      @Qualifier("customUserDetailsService") UserDetailsService userDetailsService // ← HIGHLIGHT (DB-backed service)
   ) {
     this.jwtUtil = jwtUtil;
     this.userDetailsService = userDetailsService;
