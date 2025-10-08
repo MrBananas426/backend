@@ -1,5 +1,6 @@
-package com.example.icebreaker.security;
+﻿package com.example.icebreaker.security;
 
+import org.springframework.context.annotation.Lazy;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,11 +15,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
+
 import java.io.IOException;
 
+@Lazy
 @Component
-public class JwtAuthFilter extends OncePerRequestFilter {
+public class JwtAuthFilter extends org.springframework.web.filter.OncePerRequestFilter {
   private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
 
   private final JwtUtil jwtUtil;
@@ -26,7 +28,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
   public JwtAuthFilter(
       JwtUtil jwtUtil,
-      @Qualifier("inMemoryUserDetailsService") UserDetailsService userDetailsService
+      @Qualifier("customUserDetailsService") UserDetailsService userDetailsService // ← HIGHLIGHT (use DB-backed service)
   ) {
     this.jwtUtil = jwtUtil;
     this.userDetailsService = userDetailsService;
@@ -95,7 +97,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (valid) {
           String subject = jwtUtil.getSubject(token);
           UserDetails user = userDetailsService.loadUserByUsername(subject);
-
           UsernamePasswordAuthenticationToken auth =
               new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
           auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
