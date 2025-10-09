@@ -1,4 +1,4 @@
-// Ã¢â€ Â HIGHLIGHT: Ensure the very first character in the file is 'p' in 'package' (NO characters before it)
+// ÃƒÂ¢Ã¢â‚¬Â Ã‚Â HIGHLIGHT: Ensure the very first character in the file is 'p' in 'package' (NO characters before it)
 package com.example.icebreaker.security;
 
 import org.springframework.context.annotation.Lazy;
@@ -29,7 +29,7 @@ public class JwtAuthFilter extends org.springframework.web.filter.OncePerRequest
 
   public JwtAuthFilter(
     JwtUtil jwtUtil,
-    @org.springframework.beans.factory.annotation.Qualifier("inMemoryUserDetailsService")  // â† use in-memory
+    @org.springframework.beans.factory.annotation.Qualifier("inMemoryUserDetailsService")
     org.springframework.security.core.userdetails.UserDetailsService userDetailsService
 ) {
     this.jwtUtil = jwtUtil;
