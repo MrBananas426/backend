@@ -11,7 +11,7 @@ import java.util.Map;
 @RestController
 public class FeedController {
 
-    @GetMapping("/api/feed")
+    @GetMapping(value = "/api/feed", produces = "application/json")
     public ResponseEntity<List<Map<String, Object>>> getFeed() {
         // Empty list is fine for now; endpoint exists and is secured.
         return ResponseEntity.ok(Collections.emptyList());
