@@ -1,4 +1,3 @@
-// ÃƒÂ¢Ã¢â‚¬Â Ã‚Â HIGHLIGHT: Ensure the very first character in the file is 'p' in 'package' (NO characters before it)
 package com.example.icebreaker.security;
 
 import org.springframework.context.annotation.Lazy;
@@ -16,7 +15,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 
 @Lazy
@@ -28,13 +26,12 @@ public class JwtAuthFilter extends org.springframework.web.filter.OncePerRequest
   private final UserDetailsService userDetailsService;
 
   public JwtAuthFilter(
-    JwtUtil jwtUtil,
-    @org.springframework.beans.factory.annotation.Qualifier("inMemoryUserDetailsService")
-    org.springframework.security.core.userdetails.UserDetailsService userDetailsService
-) {
+      JwtUtil jwtUtil,
+      @Qualifier("inMemoryUserDetailsService") UserDetailsService userDetailsService
+  ) {
     this.jwtUtil = jwtUtil;
     this.userDetailsService = userDetailsService;
-}
+  }
 
   private boolean isCorsPreflight(HttpServletRequest request) {
     return "OPTIONS".equalsIgnoreCase(request.getMethod())
@@ -64,7 +61,6 @@ public class JwtAuthFilter extends org.springframework.web.filter.OncePerRequest
       return;
     }
 
-    // --- token extraction (Authorization Bearer | Authorization raw | X-Auth-Token | ?token=) ---
     String token = null;
     String authorization = request.getHeader("Authorization");
     if (authorization != null) {
@@ -89,7 +85,6 @@ public class JwtAuthFilter extends org.springframework.web.filter.OncePerRequest
       return;
     }
 
-    // --- validate and authenticate ---
     if (SecurityContextHolder.getContext().getAuthentication() == null) {
       try {
         boolean valid = jwtUtil.isValid(token);
@@ -99,6 +94,7 @@ public class JwtAuthFilter extends org.springframework.web.filter.OncePerRequest
         if (valid) {
           String subject = jwtUtil.getSubject(token);
           UserDetails user = userDetailsService.loadUserByUsername(subject);
+
           UsernamePasswordAuthenticationToken auth =
               new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
           auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
