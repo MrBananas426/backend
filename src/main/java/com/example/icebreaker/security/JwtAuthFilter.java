@@ -1,4 +1,4 @@
-// â† HIGHLIGHT: Ensure the very first character in the file is 'p' in 'package' (NO characters before it)
+// Ã¢â€ Â HIGHLIGHT: Ensure the very first character in the file is 'p' in 'package' (NO characters before it)
 package com.example.icebreaker.security;
 
 import org.springframework.context.annotation.Lazy;
@@ -28,12 +28,13 @@ public class JwtAuthFilter extends org.springframework.web.filter.OncePerRequest
   private final UserDetailsService userDetailsService;
 
   public JwtAuthFilter(
-      JwtUtil jwtUtil,
-      @Qualifier("customUserDetailsService") UserDetailsService userDetailsService // â† HIGHLIGHT (DB-backed service)
-  ) {
+    JwtUtil jwtUtil,
+    @org.springframework.beans.factory.annotation.Qualifier("inMemoryUserDetailsService")  // â† use in-memory
+    org.springframework.security.core.userdetails.UserDetailsService userDetailsService
+) {
     this.jwtUtil = jwtUtil;
     this.userDetailsService = userDetailsService;
-  }
+}
 
   private boolean isCorsPreflight(HttpServletRequest request) {
     return "OPTIONS".equalsIgnoreCase(request.getMethod())
